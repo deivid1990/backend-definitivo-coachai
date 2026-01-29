@@ -1,28 +1,22 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const path = require('path');
-
-// 1. CONFIGURACIÓN DE VARIABLES DE ENTORNO
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
+// Eliminamos dotenv y path porque en Railway las variables ya vienen en el sistema
 const app = express();
+
+// 1. CONFIGURACIÓN DE PUERTO
 const PORT = process.env.PORT || 5000;
 
-// 2. MIDDLEWARES GLOBALES - CONFIGURACIÓN DE CORS MEJORADA
-// Esta configuración permite que tu frontend en Vercel se comunique sin bloqueos
+// 2. MIDDLEWARES GLOBALES (Configuración ultra-compatible para producción)
 app.use(cors({
-    origin: '*', // Permite peticiones desde cualquier origen
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true
 }));
 
-// Permitir que Express lea cuerpos de mensajes en formato JSON
 app.use(express.json());
 
 // 3. RUTAS (Endpoints)
-// Conectamos cada prefijo de URL con su respectivo archivo de rutas
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/rutinas', require('./routes/routines'));
 app.use('/api/ejercicios', require('./routes/exercises'));
@@ -30,30 +24,19 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/sesiones', require('./routes/sessions'));
 app.use('/api/training', require('./routes/training'));
 
-// 4. RUTA DE COMPROBACIÓN (Health Check)
+// 4. HEALTH CHECK
 app.get('/', (req, res) => {
     res.json({
         status: 'GymAI Coach Backend Online',
-        timestamp: new Date().toISOString(),
-        port: PORT
+        supabase_ready: !!process.env.SUPABASE_URL,
+        ia_ready: !!process.env.OPENAI_API_KEY
     });
 });
 
-// 5. MANEJO DE ERRORES BÁSICO
-app.use((req, res) => {
-    res.status(404).json({ error: 'Ruta no encontrada' });
-});
-
-// 6. INICIO DEL SERVIDOR
+// 5. INICIO DEL SERVIDOR
 app.listen(PORT, () => {
-    console.log(`\n=========================================`);
-    console.log(`🚀 SERVIDOR LISTO EN PUERTO: ${PORT}`);
-    console.log(`📍 URL Base: http://localhost:${PORT}`);
-    console.log(`🔗 Rutas activas:`);
-    console.log(`   - AI:         /api/ai`);
-    console.log(`   - Rutinas:    /api/rutinas`);
-    console.log(`   - Ejercicios: /api/ejercicios`);
-    console.log(`=========================================\n`);
+    console.log(`🚀 SERVIDOR ACTIVO EN PUERTO: ${PORT}`);
+    console.log(`✅ IA Endpoint: /api/ai`);
 });
 
 module.exports = app;
