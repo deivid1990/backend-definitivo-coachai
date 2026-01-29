@@ -4,15 +4,20 @@ const dotenv = require('dotenv');
 const path = require('path');
 
 // 1. CONFIGURACIÓN DE VARIABLES DE ENTORNO
-// Buscamos el .env un nivel arriba de la carpeta 'src'
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 2. MIDDLEWARES GLOBALES
-// Permitir que el frontend se comunique con el backend
-app.use(cors());
+// 2. MIDDLEWARES GLOBALES - CONFIGURACIÓN DE CORS MEJORADA
+// Esta configuración permite que tu frontend en Vercel se comunique sin bloqueos
+app.use(cors({
+    origin: '*', // Permite peticiones desde cualquier origen
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true
+}));
+
 // Permitir que Express lea cuerpos de mensajes en formato JSON
 app.use(express.json());
 
@@ -26,7 +31,6 @@ app.use('/api/sesiones', require('./routes/sessions'));
 app.use('/api/training', require('./routes/training'));
 
 // 4. RUTA DE COMPROBACIÓN (Health Check)
-// Útil para saber si el servidor está "vivo" desde el navegador
 app.get('/', (req, res) => {
     res.json({
         status: 'GymAI Coach Backend Online',
@@ -35,7 +39,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// 5. MANEJO DE ERRORES BÁSICO (Para rutas no encontradas)
+// 5. MANEJO DE ERRORES BÁSICO
 app.use((req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
 });
@@ -46,8 +50,8 @@ app.listen(PORT, () => {
     console.log(`🚀 SERVIDOR LISTO EN PUERTO: ${PORT}`);
     console.log(`📍 URL Base: http://localhost:${PORT}`);
     console.log(`🔗 Rutas activas:`);
-    console.log(`   - AI:        /api/ai`);
-    console.log(`   - Rutinas:   /api/rutinas`);
+    console.log(`   - AI:         /api/ai`);
+    console.log(`   - Rutinas:    /api/rutinas`);
     console.log(`   - Ejercicios: /api/ejercicios`);
     console.log(`=========================================\n`);
 });
