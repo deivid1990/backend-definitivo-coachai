@@ -5,7 +5,15 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:rf01": "jest --testPathPattern=\"aiController|aiService|adjustmentController\" --testNamePattern=\"RF-01\"",
+    "test:rf02": "jest tests/controllers/routineController.test.js",
+    "test:rf03": "jest tests/controllers/exerciseController.test.js",
+    "test:rf04": "jest tests/controllers/sessionController.test.js tests/controllers/trainingController.test.js",
+    "test:rf05": "jest tests/controllers/sessionController.test.js tests/controllers/trainingController.test.js tests/controllers/adjustmentController.test.js",
+    "test:rf06": "jest tests/controllers/adjustmentController.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
@@ -15,6 +23,25 @@
     "openai": "^4.104.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
+    ],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js",
+      "**/*.test.js"
+    ],
+    "testPathIgnorePatterns": ["node_modules"],
+    "setupFiles": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "verbose": true
   }
 }

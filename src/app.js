@@ -33,10 +33,12 @@ app.get('/', (req, res) => {
     });
 });
 
-// 5. INICIO DEL SERVIDOR
-app.listen(PORT, () => {
-    console.log(`🚀 SERVIDOR ACTIVO EN PUERTO: ${PORT}`);
-    console.log(`✅ IA Endpoint: /api/ai`);
-});
+// 5. INICIO DEL SERVIDOR (no levantar en tests)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`🚀 SERVIDOR ACTIVO EN PUERTO: ${PORT}`);
+        console.log(`✅ IA Endpoint: /api/ai`);
+    });
+}
 
 module.exports = app;

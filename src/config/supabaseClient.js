@@ -11,12 +11,14 @@ dotenv.config({ path: envPath });
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-// 3. DEBUG EN CONSOLA
-console.log("--- DEBUG SUPABASE CLIENT ---");
-console.log("Ruta buscada:", envPath);
-console.log("URL:", supabaseUrl ? "✅ OK" : "❌ NO ENCONTRADA");
-console.log("KEY:", supabaseKey ? "✅ OK" : "❌ NO ENCONTRADA");
-console.log("---------------------------");
+// 3. DEBUG EN CONSOLA (omitir en tests)
+if (process.env.NODE_ENV !== 'test') {
+    console.log("--- DEBUG SUPABASE CLIENT ---");
+    console.log("Ruta buscada:", envPath);
+    console.log("URL:", supabaseUrl ? "✅ OK" : "❌ NO ENCONTRADA");
+    console.log("KEY:", supabaseKey ? "✅ OK" : "❌ NO ENCONTRADA");
+    console.log("---------------------------");
+}
 
 // 4. VERIFICACIÓN Y CREACIÓN
 if (!supabaseUrl || !supabaseKey) {
