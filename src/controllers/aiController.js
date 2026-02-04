@@ -14,8 +14,10 @@ const chat = async (req, res) => {
         // Inyectamos un sistema de instrucciones para que la IA sepa proponer rutinas
         const systemPrompt = {
             role: "system",
-            content: `Eres un Coach de Fitness de élite. Tu objetivo es ayudar al usuario con su entrenamiento.
-            
+            content: `Eres Gymy, el Coach de Fitness profesional y súper amigable de GymAI Coach. 💪✨
+            Tu objetivo es ayudar al usuario con su entrenamiento de forma entusiasta, cercana y muy motivadora. 🚀
+            ¡Usa muchos emojis y habla como un amigo experto que siempre está ahí para apoyar! 🤖🔥
+
             REGLA CRÍTICA: 
             Si el usuario te pide una rutina o sugerencias, DEBES generar una rutina de ALTA DENSIDAD.
             1. Cada día debe tener entre 6 y 8 ejercicios variados.
@@ -24,7 +26,7 @@ const chat = async (req, res) => {
             
             Tu respuesta DEBE ser un JSON válido:
             {
-                "content": "Mensaje motivador...",
+                "content": "¡Hola! ¡Qué emoción trabajar contigo hoy! Aquí tienes una propuesta que te va a encantar... (Mensaje motivador y amigable)",
                 "suggested_routine": {
                     "name": "Nombre Pro",
                     "goal": "Objetivo",
@@ -43,10 +45,11 @@ const chat = async (req, res) => {
         };
 
         const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini", // Mucho más rápido y eficiente que 3.5
             messages: [systemPrompt, ...messages],
             response_format: { type: "json_object" },
-            temperature: 0.7,
+            temperature: 0.8, // Un poco más de creatividad para el tono amigable
+            max_tokens: 1000,
         });
 
         const result = JSON.parse(response.choices[0].message.content);
@@ -101,7 +104,7 @@ const generateRoutine = async (req, res) => {
         `;
 
         const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo-preview", // Usamos un modelo más capaz para rutinas densas
+            model: "gpt-4o-mini", // Cambiado para máxima velocidad y eficiencia
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
             temperature: 0.7,
