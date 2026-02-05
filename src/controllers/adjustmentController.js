@@ -3,7 +3,22 @@ const supabase = require('../config/supabaseClient');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    timeout: 30000,
+    maxRetries: 2,
 });
+
+/**
+ * Helper para reintentar promesas
+ */
+const withRetry = async (fn, retries = 2, delay = 1000) => {
+    try {
+        return await fn();
+    } catch (error) {
+        if (retries <= 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return withRetry(fn, retries - 1, delay * 2);
+    }
+};
 
 const analyzeAndAdjust = async (req, res) => {
     if (!req.user || !req.user.id) {
@@ -45,67 +60,49 @@ const analyzeAndAdjust = async (req, res) => {
 
         if (!history || history.length === 0) {
             return res.json({
-                suggestion: "Tu núcleo de datos está vacío. Realiza al menos 5 sesiones de entrenamiento para que pueda calcular tus vectores de progresión y optimizar tu plan. ¡El primer paso es la constancia!",
+                suggestion: "Tu núcleo de datos está vacío. Realiza al menos 5 sesiones de entrenamiento para que pueda calcular tus vectores de progresión.",
                 status: "insufficient_data",
                 analysis: "SISTEMA EN ESPERA: SIN DATOS DE SESIÓN DETECTADOS."
             });
         }
 
-        // 3. Prepare Prompt for AI with Safety Focus
+        // 3. Prepare Prompt for AI
         const prompt = `
-            Actúa como un coach de fitness de élite y experto en seguridad biomecánica. Analiza los datos de entrenamiento de este usuario.
-            
-            PERFIL DEL USUARIO:
-            - Objetivo: ${profile.goal}
-            - Nivel: ${profile.fitness_level}
-
-            DATOS HISTÓRICOS (Últimas 5 sesiones):
-            ${JSON.stringify(history.map(h => ({
+            Actúa como un coach de fitness experto. Analiza estos datos de entrenamiento.
+            Perfil: Objetivo ${profile.goal}, Nivel ${profile.fitness_level}.
+            Datos: ${JSON.stringify(history.map(h => ({
             fecha: h.started_at,
-            ejercicios: h.workout_sets.map(s => ({
-                peso: s.weight,
-                reps: s.reps,
-                completado: s.completed
-            }))
+            sets: h.workout_sets
         })))}
 
-            REGLAS CRÍTICAS DE SEGURIDAD:
-            - SIEMPRE prioriza la técnica sobre el peso.
-            - Si el progreso está estancado, considera cambiar el tiempo o las series antes de aumentar el peso.
-            - Nunca sugieras aumentos de peso superiores al 10% semanal.
-
-            OBJETIVO:
-            Basado en la consistencia y el rendimiento, determina el estado del progreso.
-
-            IMPORTANTE: Responde ÚNICAMENTE en ESPAÑOL y devuelve un objeto JSON VÁLIDO con esta estructura:
+            Responde ÚNICAMENTE en JSON:
             {
                 "status": "progressing" | "stalled" | "inconsistent",
-                "analysis": "Análisis breve de las métricas (máx. 2 frases).",
-                "safety_warning": "Un consejo de seguridad OBLIGATORIO basado en la intensidad actual.",
-                "suggestion": "Plan de acción concreto y motivador (máx. 2 frases).",
-                "recommended_changes": [
-                    { "type": "increase_weight", "exercise": "Nombre del Ejercicio", "value": "+2.5kg", "reason": "Reps altas consistentes" }
-                ],
+                "analysis": "...",
+                "safety_warning": "...",
+                "suggestion": "...",
+                "recommended_changes": [],
                 "automatic_apply_available": true
             }
         `;
 
-        // 4. Call OpenAI
-        const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" },
-            temperature: 0.6,
+        // 4. Call OpenAI with Retry
+        const analysis = await withRetry(async () => {
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o-mini", // Cambiado de 3.5 a 4o-mini (más rápido y mejor)
+                messages: [{ role: "user", content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.5,
+            });
+            return JSON.parse(completion.choices[0].message.content);
         });
 
-        const analysis = JSON.parse(completion.choices[0].message.content);
-
-        console.log("✅ Análisis de Seguridad y Progreso completado");
+        console.log("✅ Análisis completado");
         res.json(analysis);
 
     } catch (error) {
         console.error("❌ Error en análisis:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "Error analizando el progreso", details: error.message });
     }
 };
 
